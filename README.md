@@ -42,7 +42,7 @@ To run this script as a service at system startup, follow these steps:
 sudo nano /etc/systemd/system/meshtastic_c2.service
 ```
 
-2. Add the following content to the service file:
+2. Add the following content to the service file, replace `/path/to/meshtastic_c2` with the actual path to your installation directory and adjust the `User` as needed.
 
 ```ini
 [Unit]
@@ -50,8 +50,8 @@ Description=Meshtastic Command & Control Service
 After=network.target
 
 [Service]
-User=root  # Change this to the desired user
-WorkingDirectory=/path/to/meshtastic_c2  # Change this to the installation directory
+User=root
+WorkingDirectory=/path/to/meshtastic_c2 
 ExecStart=/path/to/meshtastic_c2/envs/bin/python /path/to/meshtastic_c2/command.py
 Restart=always
 
@@ -83,4 +83,3 @@ sudo systemctl start meshtastic_c2.service
 sudo systemctl status meshtastic_c2.service
 ```
 
-Replace `/path/to/meshtastic_c2` with the actual path to your installation directory and adjust the `User` as needed.

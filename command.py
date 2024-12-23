@@ -105,6 +105,7 @@ def connect_and_listen():
             logger.info("Connecting to Meshtastic device...")
             with SerialInterface() as interface:
                 try:
+                    # Perform a sanity check to see if we can obtain the hardware model
                     if interface.nodes:
                         for n in interface.nodes.values():
                             if n["num"] == interface.myInfo.my_node_num:
@@ -125,7 +126,7 @@ def connect_and_listen():
                     interface.close()
         except Exception as e:
             logger.error(f"Connection error: {e}")
-            logger.info("Attempting to reconnect in 5 seconds...")
+            logger.info("Attempting to reconnect to serial device in 5 seconds...")
             time.sleep(5)
 
 def main():
