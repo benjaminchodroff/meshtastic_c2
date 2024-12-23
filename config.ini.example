@@ -1,3 +1,6 @@
 [DEFAULT]
 channel = 1
-status_interval = 300  # Interval in seconds (5 minutes)
+status_interval = 600  # Interval in seconds (10 minutes)
+log_file = output.log
+log_file_level = DEBUG
+console_log_level = DEBUG

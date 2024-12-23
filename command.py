@@ -12,6 +12,9 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 channel = int(config['DEFAULT']['channel'])
 status_interval = int(config['DEFAULT']['status_interval'])
+log_file = config['DEFAULT']['log_file']
+log_file_level = config['DEFAULT']['log_file_level']
+console_log_level = config['DEFAULT']['console_log_level']
 
 logger = logging.getLogger(__name__)
 ch = logging.StreamHandler()
@@ -20,16 +23,19 @@ start_time = time.time()
 
 def onConnection(interface, topic=pub.AUTO_TOPIC):
     logger.debug(f"Broadcast startup message on channel {channel}")
-    startup_message = f"Device is online and ready."
-    interface.sendText(startup_message, channelIndex=channel)
-    logger.info(f"Startup message broadcasted on channel {channel}: {startup_message}")
+    startup_message = "Device is online and ready."
+    try:
+        interface.sendText(startup_message, channelIndex=channel)
+        logger.info(f"Startup message broadcasted on channel {channel}: {startup_message}")
+    except Exception as e:
+        logger.error(f"Failed to send startup message: {e}")
 
 def onReceive(packet, interface):
-    logger.debug(f"Received packet...")
+    logger.debug("Received packet...")
     try:
         # Extract channel index and message text
         channel_index = packet.get("channel")
-        text = packet.get("decoded").get("payload", {})
+        text = packet.get("decoded", {}).get("payload", "")
         if channel_index == channel:  # Only process messages from the monitored channel index
             if text.startswith(b'!cmd '):  # Commands start with "!cmd "
                 command = text[5:]  # Remove the "!cmd " prefix
@@ -62,44 +68,52 @@ def send_system_status(interface):
     cpu_load = psutil.cpu_percent(interval=1)
     status_message = f"Elapsed Time: {elapsed_time:.2f} minutes, Uptime: {uptime_str}, CPU Load: {cpu_load}%"
     logger.info(f"Sending system status: {status_message}")
-    interface.sendText(status_message, channelIndex=channel)
+    try:
+        interface.sendText(status_message, channelIndex=channel)
+    except Exception as e:
+        logger.error(f"Failed to send system status: {e}")
+
+def setup_logging():
+    logging.basicConfig(filename=log_file, level=getattr(logging, log_file_level))
+    ch.setLevel(getattr(logging, console_log_level))
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    logger.info('Started')
+
+def connect_and_listen():
+    while True:
+        try:
+            logger.info("Connecting to Meshtastic device...")
+            with SerialInterface() as interface:
+                try:
+                    if interface.nodes:
+                        for n in interface.nodes.values():
+                            if n["num"] == interface.myInfo.my_node_num:
+                                logger.debug(n["user"]["hwModel"])
+                    
+                    pub.subscribe(onReceive, "meshtastic.receive")
+                    pub.subscribe(onConnection, "meshtastic.connection.established")
+                    logger.info("Listening for messages. Press Ctrl+C to exit.")
+                    
+                    # Send system status every configured interval
+                    while True:
+                        send_system_status(interface)
+                        time.sleep(status_interval)  # Sleep for the configured interval
+                except Exception as e:
+                    logger.error(f"Error during operation: {e}")
+                finally:
+                    logger.debug("Closing the interface.")
+                    interface.close()
+        except Exception as e:
+            logger.error(f"Connection error: {e}")
+            logger.info("Attempting to reconnect in 5 seconds...")
+            time.sleep(5)
 
 def main():
     try:
-        logging.basicConfig(filename='output.log', level=logging.DEBUG)
-        ch.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        ch.setFormatter(formatter)
-        logger.addHandler(ch)
-        logger.info('Started')
-        
-        while True:
-            try:
-                logger.info("Connecting to Meshtastic device...")
-                with SerialInterface() as interface:
-                    try:
-                        if interface.nodes:
-                            for n in interface.nodes.values():
-                                if n["num"] == interface.myInfo.my_node_num:
-                                    logger.debug(n["user"]["hwModel"])
-                       
-                        pub.subscribe(onReceive, "meshtastic.receive")
-                        pub.subscribe(onConnection, "meshtastic.connection.established")
-                        logger.info("Listening for messages. Press Ctrl+C to exit.")
-                        
-                        # Send system status every configured interval
-                        while True:
-                            send_system_status(interface)
-                            time.sleep(status_interval)  # Sleep for the configured interval
-                    except Exception as e:
-                        logger.error(f"Error during operation: {e}")
-                    finally:
-                        logger.debug("Closing the interface.")
-                        interface.close()
-            except Exception as e:
-                logger.error(f"Connection error: {e}")
-                logger.info("Attempting to reconnect in 5 seconds...")
-                time.sleep(5)
+        setup_logging()
+        connect_and_listen()
     except KeyboardInterrupt:
         logger.info('Finished')
     except Exception as e:
