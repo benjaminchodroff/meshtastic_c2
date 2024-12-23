@@ -24,13 +24,13 @@ Note the channel index and adjust below accordingly:
 
 ```meshtastic --ch-index 1 --ch-set psk random --ch-set uplink_enabled true --ch-set downlink_enabled true --ch-set module_settings.position_precision 32```
 
-Note: If you need to copy this channel to other devices, you can retrieve the random psk using meshtastic --info and converting the Base64 private key listed to Hex 0x123. The index number doesn't matter to be the same across devices, but you must update command.py to use the channel index to be monitored for commands
+Note: If you need to copy this channel to other devices, you can retrieve the random psk using meshtastic --info and converting the Base64 private key listed to Hex 0x123. The index number doesn't matter to be the same across devices, but you must update c2.py to use the channel index to be monitored for commands
 
 # Usage
 
 Modify the channel number in config.ini to reflect your private channel on the connected device
 
-```python command.py```
+```python c2.py```
 
 # Optional: Run as a Systemd Service (Ubuntu 22.04)
 
@@ -52,7 +52,7 @@ After=network.target
 [Service]
 User=root
 WorkingDirectory=/path/to/meshtastic_c2 
-ExecStart=/path/to/meshtastic_c2/envs/bin/python /path/to/meshtastic_c2/command.py
+ExecStart=/path/to/meshtastic_c2/envs/bin/python /path/to/meshtastic_c2/c2.py
 Restart=always
 
 [Install]

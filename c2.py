@@ -5,6 +5,7 @@ import logging
 import psutil
 import configparser
 import os
+import paho.mqtt.client as mqtt
 from logging.handlers import TimedRotatingFileHandler
 from meshtastic.serial_interface import SerialInterface
 from pubsub import pub
@@ -19,6 +20,13 @@ log_file_level = config['DEFAULT']['log_file_level']
 console_log_level = config['DEFAULT']['console_log_level']
 log_file_dir = config['DEFAULT']['log_file_dir']
 log_file_path = f"{log_file_dir}/{log_file}"
+
+mqtt_enabled = config.getboolean('DEFAULT', 'mqtt_enabled')
+mqtt_broker = config['DEFAULT']['mqtt_broker']
+mqtt_port = int(config['DEFAULT']['mqtt_port'])
+mqtt_topic = config['DEFAULT']['mqtt_topic']
+mqtt_username = config['DEFAULT']['mqtt_username']
+mqtt_password = config['DEFAULT']['mqtt_password']
 
 # Ensure the log directory exists
 try:
@@ -99,7 +107,32 @@ def setup_logging():
     
     logger.info('Started')
 
+def on_mqtt_message(client, userdata, message):
+    logger.info(f"Received MQTT message: {message.payload.decode()}")
+    try:
+        interface.sendText(message.payload.decode(), channelIndex=channel)
+    except Exception as e:
+        logger.error(f"Failed to send message to mesh network: {e}")
+
+def setup_mqtt():
+    client = mqtt.Client()
+    client.username_pw_set(mqtt_username, mqtt_password)
+    client.on_message = on_mqtt_message
+    try:
+        client.connect(mqtt_broker, mqtt_port)
+        client.subscribe(mqtt_topic)
+        client.loop_start()
+        logger.info(f"Connected to MQTT broker at {mqtt_broker}:{mqtt_port}, subscribed to topic {mqtt_topic}")
+    except Exception as e:
+        logger.error(f"Failed to connect to MQTT broker: {e}")
+        raise SystemExit(f"Failed to connect to MQTT broker: {e}")
+    return client
+
 def connect_and_listen():
+    mqtt_client = None
+    if mqtt_enabled:
+        mqtt_client = setup_mqtt()
+    
     while True:
         try:
             logger.info("Connecting to Meshtastic device...")
