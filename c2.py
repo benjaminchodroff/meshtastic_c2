@@ -5,6 +5,7 @@ import logging
 import psutil
 import configparser
 import os
+import warnings
 import paho.mqtt.client as mqtt
 from logging.handlers import TimedRotatingFileHandler
 from meshtastic.serial_interface import SerialInterface
@@ -21,6 +22,7 @@ console_log_level = config['DEFAULT']['console_log_level']
 log_file_dir = config['DEFAULT']['log_file_dir']
 log_file_path = f"{log_file_dir}/{log_file}"
 
+# MQTT support is not yet implemented
 mqtt_enabled = config.getboolean('DEFAULT', 'mqtt_enabled')
 mqtt_broker = config['DEFAULT']['mqtt_broker']
 mqtt_port = int(config['DEFAULT']['mqtt_port'])
@@ -115,7 +117,12 @@ def on_mqtt_message(client, userdata, message):
         logger.error(f"Failed to send message to mesh network: {e}")
 
 def setup_mqtt():
-    client = mqtt.Client()
+    client_id="meshtastic-c2" # Bug - need to figure this out
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    try:
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1,client_id)
+    except:
+        client = mqtt.Client(client_id)
     client.username_pw_set(mqtt_username, mqtt_password)
     client.on_message = on_mqtt_message
     try:
