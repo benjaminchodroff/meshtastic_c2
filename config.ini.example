@@ -1,2 +1,3 @@
 [DEFAULT]
 channel = 1
+status_interval = 300  # Interval in seconds (5 minutes)

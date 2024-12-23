@@ -11,6 +11,7 @@ from pubsub import pub
 config = configparser.ConfigParser()
 config.read('config.ini')
 channel = int(config['DEFAULT']['channel'])
+status_interval = int(config['DEFAULT']['status_interval'])
 
 logger = logging.getLogger(__name__)
 ch = logging.StreamHandler()
@@ -86,10 +87,10 @@ def main():
                         pub.subscribe(onConnection, "meshtastic.connection.established")
                         logger.info("Listening for messages. Press Ctrl+C to exit.")
                         
-                        # Send system status every 5 minutes
+                        # Send system status every configured interval
                         while True:
                             send_system_status(interface)
-                            time.sleep(300)  # Sleep for 5 minutes
+                            time.sleep(status_interval)  # Sleep for the configured interval
                     except Exception as e:
                         logger.error(f"Error during operation: {e}")
                     finally:
