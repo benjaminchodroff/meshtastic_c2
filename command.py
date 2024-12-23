@@ -3,10 +3,14 @@ import subprocess
 import time
 import logging
 import psutil
+import configparser
 from meshtastic.serial_interface import SerialInterface
 from pubsub import pub
 
-channel=1
+# Load configuration
+config = configparser.ConfigParser()
+config.read('config.ini')
+channel = int(config['DEFAULT']['channel'])
 
 logger = logging.getLogger(__name__)
 ch = logging.StreamHandler()

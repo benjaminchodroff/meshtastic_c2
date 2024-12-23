@@ -11,6 +11,7 @@ cd meshtastic_c2
 virtualenv envs
 source envs/bin/activate
 pip install -r requirements.txt
+cp config.ini.example config.ini
 ```
 
 # Lora Channel Setup
@@ -27,7 +28,7 @@ Note: If you need to copy this channel to other devices, you can retrieve the ra
 
 # Usage
 
-Modify the channel number in command.py to reflect your private channel on the connected device
+Modify the channel number in config.ini to reflect your private channel on the connected device
 
 ```python command.py```
 
