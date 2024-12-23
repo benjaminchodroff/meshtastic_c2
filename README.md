@@ -32,8 +32,55 @@ Modify the channel number in config.ini to reflect your private channel on the c
 
 ```python command.py```
 
-From another device on the same channel (or via MQTT) you can now send messages such as "!cmd touch HelloWorld.txt" to execute remote commands:
+# Optional: Run as a Systemd Service (Ubuntu 22.04)
 
-```meshtastic --sendtext '!cmd touch HelloWorld.txt' --ch-index 1```
+To run this script as a service at system startup, follow these steps:
 
- 
+1. Create a systemd service file:
+
+```bash
+sudo nano /etc/systemd/system/meshtastic_c2.service
+```
+
+2. Add the following content to the service file:
+
+```ini
+[Unit]
+Description=Meshtastic Command & Control Service
+After=network.target
+
+[Service]
+User=root  # Change this to the desired user
+WorkingDirectory=/path/to/meshtastic_c2  # Change this to the installation directory
+ExecStart=/path/to/meshtastic_c2/envs/bin/python /path/to/meshtastic_c2/command.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. Reload systemd to recognize the new service:
+
+```bash
+sudo systemctl daemon-reload
+```
+
+4. Enable the service to start on boot:
+
+```bash
+sudo systemctl enable meshtastic_c2.service
+```
+
+5. Start the service:
+
+```bash
+sudo systemctl start meshtastic_c2.service
+```
+
+6. Check the status of the service:
+
+```bash
+sudo systemctl status meshtastic_c2.service
+```
+
+Replace `/path/to/meshtastic_c2` with the actual path to your installation directory and adjust the `User` as needed.

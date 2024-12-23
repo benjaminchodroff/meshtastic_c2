@@ -4,6 +4,8 @@ import time
 import logging
 import psutil
 import configparser
+import os
+from logging.handlers import TimedRotatingFileHandler
 from meshtastic.serial_interface import SerialInterface
 from pubsub import pub
 
@@ -15,6 +17,15 @@ status_interval = int(config['DEFAULT']['status_interval'])
 log_file = config['DEFAULT']['log_file']
 log_file_level = config['DEFAULT']['log_file_level']
 console_log_level = config['DEFAULT']['console_log_level']
+log_file_dir = config['DEFAULT']['log_file_dir']
+log_file_path = f"{log_file_dir}/{log_file}"
+
+# Ensure the log directory exists
+try:
+    os.makedirs(log_file_dir, exist_ok=True)
+except Exception as e:
+    logging.critical(f"Failed to create log directory {log_file_dir}: {e}")
+    raise SystemExit(f"Failed to create log directory {log_file_dir}: {e}")
 
 logger = logging.getLogger(__name__)
 ch = logging.StreamHandler()
@@ -74,11 +85,18 @@ def send_system_status(interface):
         logger.error(f"Failed to send system status: {e}")
 
 def setup_logging():
-    logging.basicConfig(filename=log_file, level=getattr(logging, log_file_level))
+    logging.basicConfig(level=getattr(logging, log_file_level))
     ch.setLevel(getattr(logging, console_log_level))
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
+    
+    # Setup TimedRotatingFileHandler for daily log rotation
+    file_handler = TimedRotatingFileHandler(log_file_path, when='midnight', interval=1)
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(getattr(logging, log_file_level))
+    logger.addHandler(file_handler)
+    
     logger.info('Started')
 
 def connect_and_listen():
