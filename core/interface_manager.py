@@ -6,6 +6,7 @@ from meshtastic.serial_interface import SerialInterface
 from meshtastic.tcp_interface import TCPInterface
 from meshtastic.mesh_interface import MeshInterface
 from pubsub import pub
+from functools import partial
 
 from core.config import Config
 from core.dispatcher import dispatch
@@ -15,25 +16,30 @@ logger = logging.getLogger(__name__)
 start_time = time.time()
 
 def on_connection(interface: MeshInterface, topic=pub.AUTO_TOPIC):
-    config = interface_manager_config  # global set below
+    config = interface_manager_config
     try:
-        interface.sendText("C2 online", channelIndex=config.channel_cmd, wantAck=False)
-        logger.info("Sent main startup")
-    except Exception as e:
-        logger.error(f"Main startup send failed: {e}")
+        # Determine message for command channel
+        allowed_raw = config.allowed_shell_commands
+        allowed_set = {c.strip() for c in allowed_raw.split(',') if c.strip()}
 
-    time.sleep(3)
+        if allowed_set:
+            cmd_message = "C2 online – send !cmd <command> (allowed: " + ", ".join(sorted(allowed_set))[:100] + "...)"
+        else:
+            cmd_message = "C2 online"
 
-    try:
+        interface.sendText(cmd_message, channelIndex=config.channel_cmd, wantAck=False)
+        logger.info(f"Sent command channel startup: {cmd_message[:50]}...")
+
+        time.sleep(3)
+
         interface.sendText(config.test_startup_message, channelIndex=config.channel_test, wantAck=False)
-        logger.info("Sent test startup")
+        logger.info("Sent test startup message")
     except Exception as e:
-        logger.error(f"Test startup send failed: {e}")
+        logger.error(f"Startup send failed: {e}")
 
-def on_receive(packet: dict, interface: MeshInterface):
-    dispatch(packet, interface)
+def on_receive(packet: dict, interface: MeshInterface, config):
+    dispatch(packet, interface, config)
 
-# Global to pass config to callbacks (simple for now)
 interface_manager_config: Config = None
 
 def connect_and_run(config: Config):
@@ -54,7 +60,7 @@ def connect_and_run(config: Config):
         else:
             raise ValueError(f"Unsupported connection_type: {config.connection_type}")
 
-        pub.subscribe(on_receive, "meshtastic.receive")
+        pub.subscribe(partial(on_receive, config=config), "meshtastic.receive")
         pub.subscribe(on_connection, "meshtastic.connection.established")
 
         logger.info(f"Listening:\n  !cmd  → channel {config.channel_cmd}\n  !test → channel {config.channel_test}")

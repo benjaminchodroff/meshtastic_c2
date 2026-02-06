@@ -23,7 +23,7 @@ def register_all_commands():
     register_command(ShellCommand())
     register_command(TestCommand())
 
-def dispatch(packet: dict, interface: MeshInterface):
+def dispatch(packet: dict, interface: MeshInterface, config):
     try:
         channel_idx = packet.get("channel")
         decoded = packet.get("decoded", {})
@@ -50,7 +50,7 @@ def dispatch(packet: dict, interface: MeshInterface):
             return
 
         logger.info(f"Dispatching {cmd_name} on channel {channel_idx}")
-        cmd.execute(packet, interface, args)
+        cmd.execute(packet, interface, args, config)
 
     except Exception as e:
         logger.error(f"Dispatch failed: {e}", exc_info=True)

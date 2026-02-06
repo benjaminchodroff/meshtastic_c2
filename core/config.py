@@ -18,6 +18,9 @@ class Config:
         self.channel_cmd: int = 1
         self.channel_test: int = 1
 
+        # cmd settings
+        self.allowed_shell_commands: str = ""
+
         # Logging & status
         self.status_interval: int = 600
         self.log_file: str = "meshtastic_c2.log"
@@ -84,6 +87,8 @@ def load_config(path: str = "config.ini") -> Config:
 
     cfg.channel_cmd        = int(sec.get("channel_cmd", str(cfg.channel_cmd)))
     cfg.channel_test       = int(sec.get("channel_test", str(cfg.channel_test)))
+
+    cfg.allowed_shell_commands = sec.get("allowed_shell_commands", cfg.allowed_shell_commands)
 
     cfg.status_interval    = int(sec.get("status_interval", str(cfg.status_interval)))
     cfg.log_file           = sec.get("log_file", cfg.log_file)

@@ -9,23 +9,58 @@ logger = logging.getLogger(__name__)
 
 class ShellCommand(Command):
     name = "!cmd"
-    channel = None  # can be set to config.channel_cmd later if desired
+    channel = None
 
-    def execute(self, packet: dict, interface: MeshInterface, args: str):
+    def execute(self, packet: dict, interface: MeshInterface, args: str, config):
         channel_idx = packet.get("channel")
         from_id = packet.get("from") or packet.get("fromId")
 
         if not args:
-            interface.sendText("Usage: !cmd <shell command>", channelIndex=channel_idx, destinationId=from_id)
+            interface.sendText(
+                "Usage: !cmd <command>",
+                channelIndex=channel_idx,
+                destinationId=from_id
+            )
             return
 
         try:
-            cmd_list = shlex.split(args)
+            parts = shlex.split(args)
+            if not parts:
+                interface.sendText("Empty command", channelIndex=channel_idx, destinationId=from_id)
+                return
+            cmd_base = parts[0]
+        except ValueError as e:
+            interface.sendText(f"Invalid command syntax: {str(e)}", channelIndex=channel_idx, destinationId=from_id)
+            return
+
+        allowed_raw = config.allowed_shell_commands
+        allowed_set = {c.strip() for c in allowed_raw.split(',') if c.strip()}
+
+        if not allowed_set:
+            interface.sendText(
+                "!cmd is disabled (no allowed commands configured)",
+                channelIndex=channel_idx,
+                destinationId=from_id
+            )
+            logger.warning(f"!cmd attempted but disabled in config: {args} from {from_id}")
+            return
+
+        if cmd_base not in allowed_set:
+            interface.sendText(
+                f"Command '{cmd_base}' is not allowed",
+                channelIndex=channel_idx,
+                destinationId=from_id
+            )
+            logger.warning(f"Rejected disallowed !cmd: {args} from {from_id}")
+            return
+
+        try:
             result = subprocess.run(
-                cmd_list,
+                parts,
                 capture_output=True,
                 text=True,
-                timeout=45,
+                timeout=30,
+                check=False,
             )
 
             response = f"Exit: {result.returncode}"
@@ -35,8 +70,12 @@ class ShellCommand(Command):
                 response += f"\nErr:\n{result.stderr.strip()}"
 
             interface.sendText(response, channelIndex=channel_idx, destinationId=from_id)
+            logger.info(f"Allowed !cmd executed: {args} from {from_id}")
+
         except subprocess.TimeoutExpired:
-            interface.sendText("Command timed out (45s)", channelIndex=channel_idx, destinationId=from_id)
+            interface.sendText("Command timed out after 30 seconds", channelIndex=channel_idx, destinationId=from_id)
+            logger.warning(f"!cmd timeout: {args} from {from_id}")
+
         except Exception as e:
-            interface.sendText(f"Error: {str(e)}", channelIndex=channel_idx, destinationId=from_id)
-            logger.error(f"Shell exec failed: {e}")
+            interface.sendText(f"Execution error: {str(e)}", channelIndex=channel_idx, destinationId=from_id)
+            logger.error(f"Shell command failed: {args} → {e}")
