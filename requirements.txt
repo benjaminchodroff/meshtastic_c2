@@ -13,14 +13,8 @@ protobuf==5.29.2
 psutil==6.1.1
 pubsub==0.1.2
 Pygments==2.19.2
-pyobjc-core==12.1
-pyobjc-framework-Cocoa==12.1
-pyobjc-framework-CoreBluetooth==12.1
-pyobjc-framework-libdispatch==12.1
 Pypubsub==4.0.3
 pyserial==3.5
-pytest-mock==3.15.1
-pytest==9.0.2
 PyYAML==6.0.2
 requests==2.32.3
 six==1.17.0

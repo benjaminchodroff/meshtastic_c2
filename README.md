@@ -83,3 +83,7 @@ sudo systemctl start meshtastic_c2.service
 sudo systemctl status meshtastic_c2.service
 ```
 
+## Development / Testing
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+python -m pytest tests/ -v
