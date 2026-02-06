@@ -62,7 +62,7 @@ def test_cmd_not_in_whitelist(mock_interface, mock_packet, mock_config):
     mock_config.allowed_shell_commands = "uptime,df -h"
 
     cmd = ShellCommand()
-    cmd.execute(mock_packet, mock_interface, "rm -rf /", mock_config)
+    cmd.execute(mock_packet, mock_interface, "rm -rf dangerous", mock_config)
 
     mock_interface.sendText.assert_called_once_with(
         "Command 'rm' is not allowed",

@@ -12,7 +12,7 @@ def main():
     logger = logging.getLogger(__name__)
     logger.info("Meshtastic C2 starting...")
 
-    register_all_commands()
+    register_all_commands(config)
 
     connect_and_run(config)
 
