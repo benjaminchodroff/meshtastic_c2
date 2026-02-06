@@ -7,6 +7,7 @@ from typing import Optional
 
 class Config:
     def __init__(self):
+        self.disabled_commands: str = ""
         # Connection settings
         self.connection_type: str = "SERIAL"
         self.tcp_hostname: str = "192.168.1.100"
@@ -75,6 +76,7 @@ def load_config(path: str = "config.ini") -> Config:
     sec = parser["DEFAULT"]
 
     # Load values with defaults from class
+    cfg.disabled_commands  = sec.get("disabled_commands", cfg.disabled_commands)
     cfg.connection_type    = sec.get("connection_type", cfg.connection_type).upper()
     cfg.tcp_hostname       = sec.get("tcp_hostname", cfg.tcp_hostname)
     cfg.tcp_port           = int(sec.get("tcp_port", str(cfg.tcp_port)))

@@ -1,4 +1,6 @@
 [DEFAULT]
+# Comma-separated list of commands to disable (e.g., !cmd,!test)
+disabled_commands = !cmd
 # TCP or SERIAL
 connection_type = SERIAL
 # If TCP, specify the hostname and port

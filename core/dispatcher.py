@@ -37,6 +37,11 @@ def dispatch(packet: dict, interface: MeshInterface):
         cmd_name = parts[0].lower()
         args = parts[1] if len(parts) > 1 else ""
 
+        disabled_set = {c.strip().lower() for c in config.disabled_commands.split(',') if c.strip()}  # Pass config to dispatch or make global
+        if cmd_name in disabled_set:
+            logger.warning(f"Rejected disabled command: {cmd_name}")
+            return
+        
         cmd = commands.get(cmd_name)
         if not cmd:
             return
