@@ -22,9 +22,10 @@ def on_connection(interface: MeshInterface, topic=pub.AUTO_TOPIC):
         cmd_message = "C2 online – send !cmd <command>"
 
         if (config.channel_cmd>=0):
+            time.sleep(1)
             interface.sendText(cmd_message, channelIndex=config.channel_cmd, wantAck=True)
             logger.info(f"Sent command channel startup: {cmd_message[:50]}...")
-            time.sleep(5)
+            time.sleep(4)
         else:
             logger.info(f"Command channel is disabled")
 
@@ -32,7 +33,7 @@ def on_connection(interface: MeshInterface, topic=pub.AUTO_TOPIC):
         if (config.channel_test>=0):
             interface.sendText(config.test_startup_message, channelIndex=config.channel_test, wantAck=True)
             logger.info("Sent test startup message")
-            time.sleep(5)
+            time.sleep(4)
         else:
             logger.info(f"Test channel is disabled")
 

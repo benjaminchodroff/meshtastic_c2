@@ -19,11 +19,16 @@ def register_command(cmd: Command):
     logger.debug(f"register_command finished: {cmd.name}")
 
 def register_all_commands(config):
-    from commands.cmd import ShellCommand
-    from commands.test import TestCommand
-    
-    register_command(ShellCommand(config.channel_cmd))
-    register_command(TestCommand(config.channel_test))
+    if config.channel_cmd >=0:
+        from commands.cmd import ShellCommand
+        command_cmd = ShellCommand()
+        command_cmd.channel = config.channel_cmd
+        register_command(command_cmd)
+    if config.channel_test >=0:
+        from commands.test import TestCommand
+        command_test = TestCommand()
+        command_test.channel = config.channel_test
+        register_command(command_test)
 
 def dispatch(packet: dict, interface: MeshInterface, config):
     try:

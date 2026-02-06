@@ -10,9 +10,6 @@ class TestCommand(Command):
     name = "!test"
     channel = None
 
-    def __init__(self, channel: int):
-        self.channel = channel
-
     def execute(self, packet: dict, interface: MeshInterface, args: str, config=None):
         channel_idx = packet.get("channel")
         from_id = packet.get("from") or packet.get("fromId")
